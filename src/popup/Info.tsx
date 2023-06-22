@@ -1,92 +1,74 @@
 import { useState } from "react";
-const DEFAULT_CONTACTS = [
-    "1313132323",
-    "1313132323",
-    "13131323",
-    "13131323",
-    "13131323",
-    "131313",
-    "13131383",
-    "13131354",
-];
-const DEFAULT_MESSAGES = [
-    "aaaaaaaaaaa",
-    "=================================",
-    "bbbbbbbbbbb",
-    "==============================",
-    "ccccccccccc",
-    "===========================",
-    "ddddddddddd",
-    "================================",
-    "eeeeeeeeeeee",
-    "========================",
-    "ffffffffffff",
-    "============================",
-];
+import { extractMessages, extractNumbers, makeMessageSets } from "./service";
+import { initialize } from "../common/storage";
 
 const Info = () => {
-    console.log(DEFAULT_CONTACTS.join("\n"));
-    const [contacts, setContacts] = useState(DEFAULT_CONTACTS.join("\n"));
-    const [messages, setMessages] = useState(DEFAULT_MESSAGES.join("\n"));
-
-    const handleSaveContacts = () => {
-        console.log("handleSaveContacts");
-        const filteredContacts = contacts.split("\n");
-
-        localStorage.setItem("contacts", JSON.stringify(filteredContacts));
-    };
-
-    const handleSaveMessages = () => {
-        console.log("handleSaveMessages");
-        const filteredMessages = messages
-            .split("\n")
-            .filter((message) => !/^=+$/.test(message.trim()));
-
-        localStorage.setItem("messages", JSON.stringify(filteredMessages));
-    };
-
-    return (
-        <div>
-            <div className="form-control">
-                <label className="label">
-                    <span className="label-text">Contacts</span>
-                </label>
-                <textarea
-                    className="textarea textarea-bordered resize-none rounded-none"
-                    placeholder="Contacts"
-                    onChange={(e) => setContacts(e.target.value)}
-                    value={contacts}
-                    rows={4}
-                />
-                <button
-                    className="btn btn-accent !text-white rounded-none my-4"
-                    disabled={contacts.length === 0}
-                    onClick={handleSaveContacts}
-                >
-                    Add Contacts
-                </button>
-            </div>
-            <div className="form-control">
-                <label className="label">
-                    <span className="label-text">Messages</span>
-                </label>
-                <textarea
-                    className="textarea textarea-bordered resize-none rounded-none"
-                    placeholder="Messages"
-                    onChange={(e) => setMessages(e.target.value)}
-                    value={messages}
-                    rows={4}
-                />
-                <button
-                    className="btn btn-info !text-white rounded-none my-4"
-                    disabled={messages.length === 0}
-                    onClick={handleSaveMessages}
-                >
-                    Add Messages
-                </button>
-            </div>
-        </div>
-    );
+  const [contacts, setContacts] = useState<string[]>([]);
+  const [messages, setMessages] = useState<string[]>([]);
+  return (
+    <div>
+      <div className="form-control">
+        <label className="label">
+          <span className="label-text">Contacts</span>
+          <input
+            type="file"
+            hidden
+            accept=".txt"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const numbers = await extractNumbers(file);
+                setContacts(numbers);
+              }
+            }}
+          />
+          <span className="btn btn-sm">select file</span>
+        </label>
+        <textarea
+          className="textarea textarea-bordered resize-none rounded-none"
+          placeholder="Contacts"
+          rows={4}
+          onChange={(e) => setContacts(e.target.value.split("\n"))}
+          value={contacts.join("\n")}
+        />
+      </div>
+      <div className="form-control">
+        <label className="label">
+          <span className="label-text">Messages</span>
+          <input
+            type="file"
+            hidden
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const msgs = await extractMessages(file);
+                setMessages(msgs);
+              }
+            }}
+          />
+          <span className="btn btn-sm">select file</span>
+        </label>
+        <textarea
+          className="textarea textarea-bordered resize-none rounded-none"
+          placeholder="Messages"
+          onChange={(e) =>
+            setMessages(e.target.value.split("\n\n====================\n\n"))
+          }
+          value={messages.join("\n\n====================\n\n")}
+          rows={4}
+        />
+        <button
+          className="btn btn-info !text-white rounded-none my-4"
+          disabled={!contacts.length && !messages.length}
+          onClick={() => {
+            initialize(contacts, messages);
+          }}
+        >
+          Add Messages
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export default Info;
