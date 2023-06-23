@@ -3,6 +3,17 @@ export const setNumbers = async (numbers: string[]) => {
   await chrome.storage.local.set({ numbers });
 };
 
+export async function getInterval() {
+  const { interval } = (await chrome.storage.local.get("interval")) as {
+    interval: number;
+  };
+  return interval;
+}
+
+export async function setInterval(interval: number) {
+  await chrome.storage.local.set({ interval });
+}
+
 export const setMessages = async (messages: string[]) => {
   await chrome.storage.local.set({ messages });
 };
@@ -27,7 +38,11 @@ export const setAllState = async (state: TExtensionState) => {
   await chrome.storage.local.set(state);
 };
 
-export const initialize = async (numbers: string[], messages: string[]) => {
+export const initialize = async (
+  numbers: string[],
+  messages: string[],
+  interval: number
+) => {
   const queue = makeMessageSets(numbers, messages);
   await setAllState({
     numbers,
@@ -36,6 +51,7 @@ export const initialize = async (numbers: string[], messages: string[]) => {
     runningState: "ready",
     sent: [],
     failed: [],
+    interval: interval,
   });
 };
 
@@ -48,6 +64,8 @@ export const clear = async () => {
   await setNumbers([]);
   await setMessages([]);
   await setQueue([]);
+  await setSent([]);
+  await setFailed([]);
   await setRunningState("idle");
 };
 

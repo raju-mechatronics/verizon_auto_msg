@@ -5,6 +5,7 @@ type TExtensionState = {
   numbers: string[];
   messages: string[];
   runningState: RunningState;
+  interval: number;
 };
 
 type MessageSet = {

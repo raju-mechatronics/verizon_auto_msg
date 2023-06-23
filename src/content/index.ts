@@ -2,6 +2,7 @@ import {
   addToFailed,
   addToSent,
   getFirstSetFromQueue,
+  getInterval,
   getRunningState,
   setRunningState,
 } from "../common/storage";
@@ -82,21 +83,18 @@ async function sendMessage(s: MessageSet) {
 async function main() {
   let runningState = await getRunningState();
   let msgSet = await getFirstSetFromQueue();
+  const interval = await getInterval();
   while (msgSet && runningState === "running") {
-    console.log("line 86", { msgSet, runningState });
     await waitForValue(() => document.hasFocus());
-    console.log("line 88", msgSet);
     await sendMessage(msgSet);
-    console.log("line 90. message send");
     await waitForSending();
-    console.log("line 92. message sent");
+    await wait(interval * 1000);
     const result = checkSuccess(msgSet);
     if (result === "success") {
       await addToSent(msgSet);
     } else {
       await addToFailed(msgSet);
     }
-    console.log("line 100. ", getCreateNewMessageBtn());
     getCreateNewMessageBtn()?.click();
 
     await wait(500);

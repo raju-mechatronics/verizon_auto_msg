@@ -1,13 +1,44 @@
-import { useState } from "react";
-import { extractMessages, extractNumbers } from "./service";
-import { initialize } from "../common/storage";
+import { useEffect, useState } from "react";
+import {
+  extractMessageFromText,
+  extractMessages,
+  extractNumbers,
+} from "./service";
+import {
+  getInterval,
+  getMessages,
+  getNumbers,
+  initialize,
+  setNumbers as setNumbersToStorage,
+  setInterval as setIntervalToStorage,
+  setMessages as setMessagesToStorage,
+} from "../common/storage";
 
 const Info = () => {
   const [contacts, setContacts] = useState<string[]>([]);
   const [messages, setMessages] = useState<string[]>([]);
+  const [interval, setInterval] = useState<number>(0);
+
+  useEffect(() => {
+    getInterval().then((interval) => setInterval(interval));
+    getMessages().then((messages) => setMessages(messages || []));
+    getNumbers().then((numbers) => setContacts(numbers || []));
+  }, []);
+
   return (
     <div>
       <div className="form-control">
+        <input
+          type="number"
+          placeholder="Interval in seconds"
+          className="input w-full input-sm border-gray-300 rounded-none"
+          onChange={(e) => {
+            const interval = parseInt(e.target.value);
+            setInterval(interval);
+            setIntervalToStorage(interval);
+          }}
+          value={interval}
+        />
         <label className="label">
           <span className="label-text">Contacts</span>
           <input
@@ -28,7 +59,10 @@ const Info = () => {
           className="textarea textarea-bordered resize-none rounded-none"
           placeholder="Contacts"
           rows={4}
-          onChange={(e) => setContacts(e.target.value.split("\n"))}
+          onChange={(e) => {
+            setContacts(e.target.value.split("\n"));
+            setNumbersToStorage(e.target.value.split("\n"));
+          }}
           value={contacts.join("\n")}
         />
       </div>
@@ -51,9 +85,11 @@ const Info = () => {
         <textarea
           className="textarea textarea-bordered resize-none rounded-none"
           placeholder="Messages"
-          onChange={(e) =>
-            setMessages(e.target.value.split("\n\n====================\n\n"))
-          }
+          onChange={(e) => {
+            const messages = extractMessageFromText(e.target.value);
+            setMessages(messages);
+            setMessagesToStorage(messages);
+          }}
           value={messages.join("\n\n====================\n\n")}
           rows={4}
         />
@@ -61,7 +97,7 @@ const Info = () => {
           className="btn btn-info !text-white rounded-none my-4"
           disabled={!contacts.length && !messages.length}
           onClick={() => {
-            initialize(contacts, messages);
+            initialize(contacts, messages, interval);
           }}
         >
           Add Messages

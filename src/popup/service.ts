@@ -28,6 +28,13 @@ export async function extractMessages(file: File) {
   return filteredTexts;
 }
 
+export function extractMessageFromText(textString: string) {
+  const multipleEqualRegExp = /={3,}/gi;
+  const texts = textString.split(multipleEqualRegExp);
+  const filteredTexts = texts.map((e) => e.trim()).filter((e) => e.length > 0);
+  return filteredTexts;
+}
+
 export function makeMessageSets(numbers: string[], messages: string[]) {
   const messageSets = numbers.map((number, index) => ({
     number,
