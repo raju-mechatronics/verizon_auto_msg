@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react";
 import Info from "./Info";
-import {
-  getAllState,
-  getRunningState,
-  stateChangeListeners,
-} from "../common/storage";
+import { getAllState } from "../common/storage";
 import RunningPage from "./running";
 
 function App() {
@@ -13,6 +9,7 @@ function App() {
   useEffect(() => {
     getAllState().then(setState);
     chrome.storage.onChanged.addListener((changes) => {
+      changes;
       getAllState().then(setState);
     });
   }, []);

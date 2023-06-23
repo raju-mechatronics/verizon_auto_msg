@@ -5,94 +5,104 @@ import {
   getRunningState,
   setRunningState,
 } from "../common/storage";
+import {
+  confirmDeleteConversation,
+  getCreateNewMessageBtn,
+  getDeleteBtn,
+  getDeleteBtnInit,
+  getMessageField,
+  getNumberField,
+  getSelectAllBtn,
+  getSendBtn,
+  isButtonActive,
+  returnToConversationList,
+  waitForReady,
+} from "./elements";
 
-import { wait, waitForElement, waitForValue } from "./services";
+import { wait, waitForValue } from "./services";
 
-function getMessageField() {
-  return document.querySelector(".message") as HTMLInputElement;
-}
-
-function getNumberField() {
-  return document.querySelector(".number") as HTMLInputElement;
-}
-
-function getSendBtn() {
-  return document.querySelector(".send") as HTMLButtonElement;
-}
-
-function getCreateNewMessageBtn() {
-  return document.querySelector(".create-new-message") as HTMLButtonElement;
-}
-
-function getSelectAllBtn() {
-  return document.querySelector(".select-all") as HTMLButtonElement;
-}
-
-function getDeleteBtn() {
-  return document.querySelector(".delete") as HTMLButtonElement;
-}
-
-function isReady() {
-  return true;
-}
-
-function isLoadingComplete() {
-  return true;
-}
-
-async function waitToLoadingFinish() {
-  await waitForValue(isLoadingComplete);
-}
-
-function checkSuccess(): "success" | "fail" {
+function checkSuccess(msgSet: MessageSet): "success" | "fail" {
+  msgSet;
   return "success";
+}
+
+async function waitForSending() {
+  const loadingEl = document.querySelector(
+    "#vma-composerSpinner"
+  ) as HTMLDivElement;
+  let isVisible = loadingEl?.style.display !== "none";
+  while (!isVisible) {
+    await wait(100);
+    isVisible = loadingEl?.style.display !== "none";
+  }
+  return isVisible;
 }
 
 async function deleteAllMessages() {
-  const selectAllBtn = getSelectAllBtn();
-  if (selectAllBtn) {
-    selectAllBtn.click();
-    const deleteBtn = getDeleteBtn();
-    await wait(500);
-    if (deleteBtn) {
-      deleteBtn.click();
-    }
-  }
+  getDeleteBtnInit()?.click();
+  await wait(500);
+  const selectAllBtn = await waitForValue(getSelectAllBtn);
+  selectAllBtn?.click();
+  await wait(500);
+  const deleteBtn = await waitForValue(getDeleteBtn);
+  isButtonActive(deleteBtn) && deleteBtn.click();
+  await wait(500);
+  await confirmDeleteConversation();
+  await wait(500);
+  returnToConversationList();
+}
+
+async function fillSet(msgSet: MessageSet) {
+  await waitForReady();
+  await wait(500);
+  getNumberField().value = msgSet.number;
+  await wait(200);
+  getMessageField().blur();
+  getMessageField().focus();
+  await wait(200);
+  getMessageField().innerText = msgSet.message;
+  console.log(getMessageField().innerText);
+  getMessageField().blur();
+  getMessageField().focus();
+  document.body.click();
+  await wait(1000);
 }
 
 async function sendMessage(s: MessageSet) {
-  await wait(1000);
-  return "success";
-  const messageField = getMessageField();
-  const numberField = getNumberField();
+  await wait(100);
+  getCreateNewMessageBtn()?.click();
+  await wait(500);
+  console.log("new message clicked");
+  await fillSet(s);
   const sendBtn = getSendBtn();
-  if (messageField && numberField && sendBtn) {
-    messageField.value = s.message;
-    numberField.value = s.number;
-    sendBtn.click();
-    await waitToLoadingFinish();
-    return checkSuccess();
-  } else {
-    await wait(100);
-    return sendMessage(s);
-  }
+  isButtonActive(sendBtn) && sendBtn.click();
+  await wait(1000);
 }
 
 async function main() {
-  await isReady();
   let runningState = await getRunningState();
   let msgSet = await getFirstSetFromQueue();
   while (msgSet && runningState === "running") {
-    const result = await sendMessage(msgSet);
+    console.log("line 86", { msgSet, runningState });
+    await waitForValue(() => document.hasFocus());
+    console.log("line 88", msgSet);
+    await sendMessage(msgSet);
+    console.log("line 90. message send");
+    await waitForSending();
+    console.log("line 92. message sent");
+    const result = checkSuccess(msgSet);
     if (result === "success") {
       await addToSent(msgSet);
     } else {
       await addToFailed(msgSet);
     }
+    console.log("line 100. ", getCreateNewMessageBtn());
+    getCreateNewMessageBtn()?.click();
+
+    await wait(500);
     msgSet = await getFirstSetFromQueue();
     runningState = await getRunningState();
     await wait(100);
-    // getCreateNewMessageBtn()?.click();
   }
   if (msgSet === undefined) {
     await setRunningState("finished");
@@ -100,13 +110,15 @@ async function main() {
   }
 }
 
-chrome.storage.onChanged.addListener(async (changes, namespace) => {
-  if (namespace !== "local") return;
-  if (changes.runningState) {
-    if (changes.runningState.newValue === "running") {
-      main();
+if (location.pathname === "/vma/web2/Message.do") {
+  chrome.storage.onChanged.addListener(async (changes, namespace) => {
+    if (namespace !== "local") return;
+    console.log(Object.keys(changes));
+    if (changes.runningState) {
+      if (changes.runningState.newValue === "running") {
+        main();
+      }
     }
-  }
-});
-
+  });
+}
 console.log("content script loaded");

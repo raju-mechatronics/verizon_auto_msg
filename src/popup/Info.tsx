@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { extractMessages, extractNumbers, makeMessageSets } from "./service";
+import { extractMessages, extractNumbers } from "./service";
 import { initialize } from "../common/storage";
 
 const Info = () => {

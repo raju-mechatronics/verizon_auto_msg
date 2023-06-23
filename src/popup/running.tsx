@@ -1,4 +1,3 @@
-import React from "react";
 import { clear, resume, start, stop } from "../common/storage";
 import ReactLoading from "react-loading";
 import SetView from "./setView";
@@ -66,13 +65,13 @@ export default function RunningPage({
       {/* message set Viewer*/}
       <b className="text-xl text-center text-info">MESSAGES</b>
       <div className={"overflow-y-auto overflow-x-hidden h-full "}>
-        {failed?.map((set, index) => (
+        {failed?.map((set) => (
           <SetView {...set} status="failed" />
         ))}
-        {sent?.map((set, index) => (
+        {sent?.map((set) => (
           <SetView {...set} status="sent" />
         ))}
-        {queue?.map((set, index) => (
+        {queue?.map((set) => (
           <SetView {...set} status="pending" />
         ))}
       </div>
