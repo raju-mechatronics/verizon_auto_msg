@@ -8,10 +8,6 @@ function sell() {
   $("[class*=sellButton]").click();
 }
 
-function close() {
-  $("[class*=closeButton]").click();
-}
-
 // Inject a div with three buttons: close, buy, sell
 function injectDiv() {
   const $div = $("<div>", {
@@ -81,7 +77,7 @@ function injectDiv() {
     },
     text: "Close",
   }).click(() => {
-    close();
+    closeTrade();
   });
 
   const $buyButton = $("<button>", {
@@ -156,7 +152,7 @@ injectDiv();
 
 $("body").keydown((e) => {
   if (e.altKey && e.key === "c") {
-    close();
+    closeTrade();
   }
   if (e.altKey && e.key === "b") {
     buy();
@@ -165,3 +161,68 @@ $("body").keydown((e) => {
     sell();
   }
 });
+
+//function get stamp
+function getStamp() {
+  let stamp = "BYBIT:BTCUSDT";
+  document.querySelectorAll("script").forEach((e) => {
+    const text = e.innerText;
+    const m = text.match(/(?<=initdata.defsymbol = ").*(?=")/gi);
+    if (m) {
+      stamp = m[0];
+    }
+  });
+  if (stamp) return stamp;
+  const mainTitle = document.querySelector('[class*="mainTitle"]')?.textContent;
+  const exchangeTitle = document.querySelector(
+    '[class*="exchangeTitle"]'
+  )?.textContent;
+  return `${exchangeTitle || "BYBIT"}:${mainTitle || "BTCUSDT"}`;
+}
+
+async function getTrades() {
+  const res = await fetch(
+    "https://papertrading.tradingview.com/trading/get_trades/",
+    {
+      body: JSON.stringify({ symbol: getStamp() }),
+      method: "POST",
+      credentials: "include",
+    }
+  );
+  const trades = await res.json();
+  let buy = 0;
+  let sell = 0;
+  trades.forEach((e: any) => {
+    if (e.side === "buy") buy += e.qty;
+    if (e.side === "sell") sell += e.qty;
+  });
+  console.log(buy, sell);
+  return { buy, sell };
+}
+
+async function closeTrade() {
+  const body = {
+    symbol: "BITSTAMP:BTCUSDT",
+    side: "buy",
+    type: "market",
+    qty: 2,
+  };
+  const stamp = getStamp();
+  if (stamp) {
+    body.symbol = stamp;
+  }
+  const trades = await getTrades();
+  if (trades.buy > trades.sell) {
+    body.side = "sell";
+    body.qty = trades.buy - trades.sell;
+  } else {
+    body.qty = trades.sell - trades.buy;
+    body.side = "buy";
+  }
+  console.log(body);
+  fetch("https://papertrading.tradingview.com/trading/place/", {
+    body: JSON.stringify(body),
+    method: "POST",
+    credentials: "include",
+  });
+}
