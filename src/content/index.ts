@@ -77,7 +77,7 @@ function injectDiv() {
     },
     text: "Close",
   }).click(() => {
-    closeTrade();
+    close();
   });
 
   const $buyButton = $("<button>", {
@@ -152,7 +152,7 @@ injectDiv();
 
 $("body").keydown((e) => {
   if (e.altKey && e.key === "x") {
-    closeTrade();
+    close();
   }
   if (e.altKey && e.key === "b") {
     buy();
@@ -162,75 +162,52 @@ $("body").keydown((e) => {
   }
 });
 
-//function get stamp
-function getStamp() {
-  let stamp = "BYBIT:BTCUSDT";
-  document.querySelectorAll("script").forEach((e) => {
-    const text = e.innerText;
-    const m = text.match(/(?<=initdata.defsymbol = ").*(?=")/gi);
-    if (m) {
-      stamp = m[0];
+function openPanel() {
+  const btn = document.querySelector(
+    '#footer-chart-panel [title="Connected"]'
+  )?.parentElement;
+  if (btn) {
+    const isActive = btn.dataset.active;
+    if (isActive === "false") {
+      btn.click();
+    } else {
+      console.log("panel already open");
+      return;
     }
-  });
-  if (stamp) return stamp;
-  const mainTitle = document.querySelector('[class*="mainTitle"]')?.textContent;
-  const exchangeTitle = document.querySelector(
-    '[class*="exchangeTitle"]'
-  )?.textContent;
-  return `${exchangeTitle || "BYBIT"}:${mainTitle || "BTCUSDT"}`;
+  }
 }
 
-async function getTrades() {
-  const res = await fetch(
-    "https://papertrading.tradingview.com/trading/get_trades/",
-    {
-      body: JSON.stringify({ symbol: getStamp() }),
-      method: "POST",
-      credentials: "include",
+function closePanel() {
+  const btn = document.querySelector(
+    '#footer-chart-panel [title="Connected"]'
+  )?.parentElement;
+  if (btn) {
+    const isActive = btn.dataset.active;
+    if (isActive === "true") {
+      btn.click();
+    } else {
+      console.log("panel already closed");
+      return;
     }
-  );
-  const trades = await res.json();
-  let buy = 0;
-  let sell = 0;
-  trades.forEach((e: any) => {
-    if (e.side === "buy") buy += e.qty;
-    if (e.side === "sell") sell += e.qty;
-  });
-  console.log(buy, sell);
-  return { buy, sell };
+  }
 }
 
-async function closeTrade() {
-  const body = {
-    symbol: "BITSTAMP:BTCUSDT",
-    side: "buy",
-    type: "market",
-    qty: 2,
-  };
-  const stamp = getStamp();
-  if (stamp) {
-    body.symbol = stamp;
-  }
-  const trades = await getTrades();
-  if (trades.buy > trades.sell) {
-    body.side = "sell";
-    body.qty = trades.buy - trades.sell;
-  } else {
-    body.qty = trades.sell - trades.buy;
-    body.side = "buy";
-  }
-  console.log(body);
-  fetch("https://papertrading.tradingview.com/trading/place/", {
-    body: JSON.stringify(body),
-    method: "POST",
-    credentials: "include",
-  });
+function getCloseBtn() {
+  return document.querySelector(
+    '#bottom-area table > tbody > tr [d="M13.35 5.35a.5.5 0 0 0-.7-.7L9 8.29 5.35 4.65a.5.5 0 1 0-.7.7L8.29 9l-3.64 3.65a.5.5 0 0 0 .7.7L9 9.71l3.65 3.64a.5.5 0 0 0 .7-.7L9.71 9l3.64-3.65z"]'
+  )?.parentElement?.parentElement?.parentElement;
 }
 
-//document.querySelector("#footer-chart-panel [title=\"Connected\"]").parentElement
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// document
-//   .querySelector(
-//     '#bottom-area table > tbody > tr [d="M13.35 5.35a.5.5 0 0 0-.7-.7L9 8.29 5.35 4.65a.5.5 0 1 0-.7.7L8.29 9l-3.64 3.65a.5.5 0 0 0 .7.7L9 9.71l3.65 3.64a.5.5 0 0 0 .7-.7L9.71 9l3.64-3.65z"]'
-//   )
-//   .parentElement.parentElement.parentElement.click();
+async function close() {
+  openPanel();
+  let i = 0;
+  while (!getCloseBtn()) {
+    await wait(100);
+    i++;
+    if (i > 20) break;
+  }
+  getCloseBtn()?.click();
+  closePanel();
+}
