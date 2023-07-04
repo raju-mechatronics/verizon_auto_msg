@@ -67,7 +67,7 @@ function injectDiv() {
     css: {
       width: "80px",
       height: "30px",
-      backgroundColor: "red",
+      backgroundColor: "orange",
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
@@ -84,7 +84,7 @@ function injectDiv() {
     css: {
       width: "80px",
       height: "30px",
-      backgroundColor: "blue",
+      backgroundColor: "green",
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
@@ -101,7 +101,7 @@ function injectDiv() {
     css: {
       width: "80px",
       height: "30px",
-      backgroundColor: "green",
+      backgroundColor: "red",
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
@@ -151,7 +151,7 @@ function injectDiv() {
 injectDiv();
 
 $("body").keydown((e) => {
-  if (e.altKey && e.key === "c") {
+  if (e.altKey && e.key === "x") {
     closeTrade();
   }
   if (e.altKey && e.key === "b") {
@@ -226,3 +226,11 @@ async function closeTrade() {
     credentials: "include",
   });
 }
+
+//document.querySelector("#footer-chart-panel [title=\"Connected\"]").parentElement
+
+// document
+//   .querySelector(
+//     '#bottom-area table > tbody > tr [d="M13.35 5.35a.5.5 0 0 0-.7-.7L9 8.29 5.35 4.65a.5.5 0 1 0-.7.7L8.29 9l-3.64 3.65a.5.5 0 0 0 .7.7L9 9.71l3.65 3.64a.5.5 0 0 0 .7-.7L9.71 9l3.64-3.65z"]'
+//   )
+//   .parentElement.parentElement.parentElement.click();
