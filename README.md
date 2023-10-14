@@ -1,2 +1,2 @@
 # auto_varizon_msg
- fiverr extension
+This extension send autometic messages to verizon
